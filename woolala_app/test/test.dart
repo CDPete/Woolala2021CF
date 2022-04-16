@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+//import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:test/test.dart';
 import 'package:woolala_app/screens/EditProfileScreen.dart';
@@ -8,6 +8,7 @@ import 'package:woolala_app/screens/post_screen.dart';
 import 'package:woolala_app/screens/profile_screen.dart';
 import 'package:woolala_app/screens/search_screen.dart';
 import 'package:woolala_app/screens/wouldbuy_list_screen.dart';
+import 'package:woolala_app/screens/imageupload_screen.dart';
 
 
 void main() {
@@ -77,6 +78,24 @@ void main() {
 
     //expected result
     expect(state.isSignedInWithGoogle,false);
+
+  }
+  );
+
+
+  test('image_display', () {
+
+    WidgetsFlutterBinding.ensureInitialized();
+
+    //init
+    ImageUploadScreen edit = new ImageUploadScreen();
+
+    //do the test
+    var state = edit.createState();
+    Widget w = state.pickImages();
+
+    //expected result
+    //expect(state.isSignedInWithGoogle,false);
 
   }
   );

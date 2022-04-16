@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:woolala_app/screens/login_screen.dart';
-import 'dart:io';
-import 'dart:convert';
-import 'package:woolala_app/main.dart';
+//import 'dart:io';
+//import 'dart:convert';
+//import 'package:woolala_app/main.dart';
 
 class CreateUserName extends StatefulWidget {
   final String currentOnlineUserId;
@@ -133,6 +133,7 @@ class _CreateUserNameState extends State<CreateUserName> {
                         children: <Widget>[
                           createUserNameTextFormField(),
                           createPrivacySwitch(),
+                          createUserTypeSwitch(),
                         ],
                       ),
                     ),
@@ -205,6 +206,34 @@ class _CreateUserNameState extends State<CreateUserName> {
             onChanged: (value) {
               setState(() {
                 currentUser.setPrivacy(value);
+              });
+            },
+            activeTrackColor: Colors.lightGreenAccent,
+            activeColor: Colors.green,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Row createUserTypeSwitch() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        Padding(
+          padding: EdgeInsets.only(top: 15.0),
+          child: Text(
+            "Brand Account",
+            style: TextStyle(color: Colors.black, fontSize: 16.0),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.only(top: 15.0),
+          child: Switch(
+            value: currentUser.brand,
+            onChanged: (value) {
+              setState(() {
+                currentUser.setBrand(value);
               });
             },
             activeTrackColor: Colors.lightGreenAccent,
