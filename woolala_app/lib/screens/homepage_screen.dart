@@ -1,4 +1,4 @@
-import 'dart:ui';
+//import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_slideshow/flutter_image_slideshow.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -6,16 +6,19 @@ import 'package:woolala_app/screens/login_screen.dart';
 import 'package:woolala_app/models/user.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:audioplayers/audioplayers.dart';
+//import 'package:audioplayers/audioplayers.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:woolala_app/screens/profile_screen.dart';
+//import 'package:woolala_app/screens/profile_screen.dart';
 import 'package:woolala_app/screens/search_screen.dart';
 import 'package:woolala_app/widgets/bottom_nav.dart';
 import 'package:woolala_app/widgets/card.dart';
 import 'package:woolala_app/main.dart';
 import 'dart:io';
+import "dart:math";///////////////////////ADDED
+import "dart:collection";///////////////////////ADDED2
 
 // Star widget on the home page
+//check
 Widget starSlider(String postID, num, rated) => RatingBar(
       initialRating: num,
       minRating: 0,
@@ -56,8 +59,9 @@ Future<http.Response> ratePost(double rating, String id) {
 }
 
 // Will be used to make the post for the first time.
-Future<http.Response> createPost(String postID, String image, String date,
-    String caption, String userID, String userName, String price) {
+Future<http.Response> createPost(String postID, String image1, String image2,
+    String image3, String image4, String image5, String date,
+    String caption, String userID, String userName, String price, String Category) {
   return http.post(
     Uri.parse(domain + '/insertPost'),
     headers: <String, String>{
@@ -67,12 +71,17 @@ Future<http.Response> createPost(String postID, String image, String date,
       'postID': postID,
       'userID': userID,
       'userName': userName,
-      'image': image,
+      'image1': image1,
+      'image2': image2,
+      'image3': image3,
+      'image4': image4,
+      'image5': image5,
       'date': date,
       'caption': caption,
       'price': price,
       'cumulativeRating': 0.0,
       'numRatings': 0,
+      'Category': Category,
       'wouldBuy': []
     }),
   );
@@ -117,7 +126,25 @@ Future<http.Response> getReports(String postID, String postUserID) async {
 Future<List> getPost(String id) async {
   http.Response res = await http.get(Uri.parse(domain + '/getPostInfo/' + id));
   Map info = jsonDecode(res.body.toString());
-  final decodedBytes = base64Decode(info["image"]);
+
+  List<Image> display = [];
+
+  if(info["image1"] != null){
+    display.add(Image.memory(base64Decode(info["image1"])));
+  }
+  if(info["image2"] != null){
+    display.add(Image.memory(base64Decode(info["image2"])));
+  }
+  if(info["image3"] != null){
+    display.add(Image.memory(base64Decode(info["image3"])));
+  }
+  if(info["image4"] != null){
+    display.add(Image.memory(base64Decode(info["image4"])));
+  }
+  if(info["image5"] != null){
+    display.add(Image.memory(base64Decode(info["image5"])));
+  }
+  
   var avg;
   if (info["numRatings"] > 0) {
     avg = info["cumulativeRating"] / info["numRatings"];
@@ -125,21 +152,14 @@ Future<List> getPost(String id) async {
     avg = 0.0;
   }
   var ret = [
-    Image.memory(decodedBytes),
     info["caption"],
     // info["price"],
     info["userID"],
     info["date"],
     avg,
     info["numRatings"],
-    ImageSlideshow(
-      width: double.infinity,
-      children: [
-        Image.memory(decodedBytes),
-        Image.memory(decodedBytes),
-        Image.memory(decodedBytes)
-      ]
-    )
+    display,
+    info["Category"]///////////////////////////////////////ADDED2
   ];
   return ret;
 }
@@ -168,6 +188,25 @@ Future<List> getFeed(String userID) async {
   return jsonDecode(res.body.toString())["postIDs"];
 }
 
+///////////////////////////////Start/////////////////////////////////////
+Future<List> getUsrs() async {
+  List results = new List();
+  List filteredResults = new List();
+  http.Response res = await http.get(Uri.parse(domain + "/getAllUsers"));
+  if (res.body.isNotEmpty) {
+    results = jsonDecode(res.body.toString());
+    filteredResults = results;
+  }
+  return filteredResults;
+}
+
+Future<List> getAllPosts(String userID) async {
+  http.Response res = await http
+      .get(Uri.parse(domain + '/getOwnFeed/' + userID));
+  return jsonDecode(res.body.toString());
+}
+////////////////////////////////END///////////////////////////////////////////
+
 class HomepageScreen extends StatefulWidget {
   final bool signedInWithGoogle;
   final bool signedInWithFacebook;
@@ -190,7 +229,25 @@ class _HomepageScreenState extends State<HomepageScreen> {
   File file;
   int numToShow;
   var feedLoading = true;
-
+  
+    ///////////////////////////////ADDED2
+  int count = 0;
+  String dropdownvalue = 'None';
+  var items = [
+    "Apparel",
+    "Shoes",
+    "Accessories",
+    "Crafts",
+    "Designs",
+    "Home",
+    "Others",
+    "None",
+  ];
+  List <String> toRemove = [];
+  var sorted = false;
+  List prePostIDs = [];
+  List users = [];/////////////////////////////ADDED
+  final Map<String, double> popular = HashMap();/////////////////////////////ADDED2
   // Change this to load more posts per refresh
   int postsPerReload = 4;
 
@@ -202,17 +259,29 @@ class _HomepageScreenState extends State<HomepageScreen> {
         int.parse(a.substring(a.indexOf(':::') + 3)));
   }
 
+  /////////////////////////START//////////////////////////////////////////
   // is called when the user pulls up on home screen
   void _onRefresh() async {
-    postIDs = await getFeed(currentUser.userID);
+    print("refresh");
+    sorted = false;
+    List temp = [];
+    temp = await getFeed(currentUser.userID);
+    var reg = [];
+    if (temp.length > 0){
+      for (int i = 0; i < temp.length; i++){
+        if (!postIDs.contains(temp[i]) && temp[i] != null){
+          reg.add(temp[i]);
+        }
+      }
+      sortPosts(reg);
+      postIDs = reg  + postIDs;
+    }
     ratedPosts = await getRatedPosts(currentUser.userID);
-    sortPosts(postIDs);
-    print(postIDs);
-    print(ratedPosts);
     // if failed,use refreshFailed()
     if (mounted) setState(() {});
     _refreshController.refreshCompleted();
   }
+  /////////////////////////////////END/////////////////////////////
 
   // is called when the user pulls down on the home screen
   void _onLoading() async {
@@ -227,29 +296,125 @@ class _HomepageScreenState extends State<HomepageScreen> {
     if (mounted) setState(() {});
     _refreshController.loadComplete();
   }
+  
+  ///////////////////////START2/////////////////////////////////
+  void filterOut() async {
+    await Future.delayed(Duration(milliseconds: 9000));
+    var rem = List.unmodifiable(toRemove);
+    if (rem.length > 0){
+      for (int j = 0; j < rem.length; j++){
+        if (postIDs.contains(rem[j])){
+          postIDs.remove(rem[j]);
+        }
+      }
+    }
 
+    count += 1;
+    if (mounted) setState(() {});
+    _refreshController.refreshCompleted();
+  }
+  void _filterPosts(List postIDs, String category) async {
+    print("Category:");
+    print(category);
+
+    if (toRemove.length > 0){
+      postIDs = toRemove;
+      toRemove = [];
+    }
+    if (category != "None"){
+      for (int i = 0; i < postIDs.length; i++){
+        getPost(postIDs[i]).then((info) {
+          if (info[6] != category){
+            toRemove.add(postIDs[i]);
+          }
+        });
+      }
+    }
+  }
+  //////////////////////END2///////////////////////////////////
+  ///////////////////////START2////////////////////////////////
+  void _sort(Map<String, double> popular, List users, var feedLoading) async {
+    await Future.delayed(Duration(milliseconds: 9000));
+    if (popular.length == users.length){
+      print("sorting");
+
+      var sortedKeys = popular.keys.toList(growable:false)
+        ..sort((k1, k2) => popular[k2].compareTo(popular[k1]));
+      LinkedHashMap sortedMap = new LinkedHashMap
+          .fromIterable(sortedKeys, key: (k) => k, value: (k) => popular[k]);
+
+      var sortedIDs = sortedMap.keys.toList(growable:false);
+      if (postIDs.length == 0){
+        for (int i = 0; i < sortedIDs.length; i++){
+          getAllPosts(sortedIDs[i]).then((list) {
+
+            if(i == 0){
+              postIDs = [];
+            }
+
+            sortPosts(list);
+            postIDs+=list;
+            if (postIDs.length < postsPerReload)
+              numToShow = postIDs.length;
+            else
+              numToShow = postsPerReload;
+            //////////////////////filter posts
+          });
+        }
+      }
+      else{
+        /*final Map<String, double> sortPosts = HashMap();
+        for (int i = 0; i < postIDs.length; i++){
+          getPost(postIDs[i]).then((info) {
+            sortPosts[postIDs[i]] = popular[info[1]];
+          });
+        }*/
+      }
+
+      _filterPosts(postIDs, dropdownvalue);
+
+    }
+
+    if (mounted) setState(() {});
+    _refreshController.refreshCompleted();
+  }
+  ///////////////////////////////END2////////////////////////////////
+
+  //////////////////////////START/////////////////////////////////////////
   @override
   initState() {
     super.initState();
-    if (currentUser != null) {
+    if (currentUser != null && postIDs.length == 0) {
+      sorted = false;
       feedLoading = true;
       getFeed(currentUser.userID).then((list) {
-        postIDs = list;
-        if (postIDs.length < postsPerReload)
-          numToShow = postIDs.length;
-        else
-          numToShow = postsPerReload;
-        sortPosts(postIDs);
-        print(postIDs);
-        setState(() {
-          feedLoading = false;
+        postIDs = List.from(list);
+        prePostIDs = List.from(list);
+        getUsrs().then((list1){
+          User rateUser;
+          users += list1; //all users
+          for (int j = 0; j < users.length; j++){
+
+              getUserFromDB(users[j]['userID']).then((usr){
+                rateUser = usr;
+
+                //Find the popularity of user:
+                rateUser.getAvgScore().then((score){
+                  popular.addAll({users[j]['userID']: score});
+                });
+
+              });
+
+          }
         });
+
       });
     }
     getRatedPosts(currentUser.userID).then((list) {
       ratedPosts = list;
     });
   }
+////////////////////////////////////////END/////////////////////////////////
 
   @override
   Widget build(BuildContext context) {
@@ -257,6 +422,28 @@ class _HomepageScreenState extends State<HomepageScreen> {
     BottomNav bottomBar = BottomNav(context);
     bottomBar.currentIndex = 1;
     bottomBar.currEmail = currentUser.email;
+    bottomBar.brand = currentUser.brand;
+
+    if (postIDs.length > 0){
+      feedLoading = false;
+      if (!sorted){
+        _sort(popular, users, feedLoading);
+
+        sorted = true;
+      }
+      if (count < 3){
+        print("Filtering");
+        filterOut();
+      }
+
+      if (toRemove.length == 0){
+        postIDs = List.from(prePostIDs);
+      }
+
+    }
+    else{
+      _sort(popular, users, feedLoading);
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -278,6 +465,48 @@ class _HomepageScreenState extends State<HomepageScreen> {
           IconButton(
             icon: Icon(Icons.exit_to_app),
             onPressed: () => startSignOut(context),
+          ),
+          IconButton(
+            icon: Icon(Icons.edit_note),
+            onPressed: () {
+              count = 0;
+              sorted = false;
+              Navigator.push(context, MaterialPageRoute<void>(
+                builder: (BuildContext context) {
+
+                  return Scaffold(
+                    appBar: AppBar(
+                      title: const Text('Filter Feed:'),
+                    ),
+                    body: Center(
+                      child: DropdownButton(
+
+                        // Initial Value
+                        value: dropdownvalue,
+
+                        // Down Arrow Icon
+                        icon: const Icon(Icons.keyboard_arrow_down),
+
+                        // Array list of items
+                        items: items.map((String items) {
+                          return DropdownMenuItem(
+                            value: items,
+                            child: Text(items),
+                          );
+                        }).toList(),
+                        // After selecting the desired option,it will
+                        // change button value to selected value
+                        onChanged: (String newValue) {
+                          setState(() {
+                            dropdownvalue = newValue;
+                          });
+                        },
+                      ),
+                    ),
+                  );
+                },
+              ));
+            },
           )
         ],
       ),
@@ -383,7 +612,7 @@ class _HomepageScreenState extends State<HomepageScreen> {
         onTap: (int index) {
           bottomBar.switchPage(index, context);
         },
-        items: bottomBar.bottom_items,
+        items: bottomBar.getItems(),
         backgroundColor: Colors.white,
       ),
     );

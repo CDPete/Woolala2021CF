@@ -1,39 +1,41 @@
-import 'dart:typed_data';
-import 'dart:ui';
+//import 'dart:typed_data';
+//import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import 'package:flutter_facebook_login/flutter_facebook_login.dart';
-import 'package:share/share.dart';
+//import 'package:google_sign_in/google_sign_in.dart';
+//import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+//import 'package:flutter_facebook_login/flutter_facebook_login.dart';
+//import 'package:share/share.dart';
 import 'package:woolala_app/screens/login_screen.dart';
-import 'package:woolala_app/models/user.dart';
+//import 'package:woolala_app/models/user.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:mongo_dart/mongo_dart.dart' as mongo;
-import 'dart:io' as Io;
+//import 'package:mongo_dart/mongo_dart.dart' as mongo;
+//import 'dart:io' as Io;
 //import 'package:audioplayers/src/audio_cache.dart';
-import 'package:audioplayers/audioplayers.dart';
-import 'dart:collection';
-import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:flutter_image_slideshow/flutter_image_slideshow.dart';
+//import 'package:audioplayers/audioplayers.dart';
+//import 'dart:collection';
+//import 'package:pull_to_refresh/pull_to_refresh.dart';
+//import 'package:flutter_image_slideshow/flutter_image_slideshow.dart';
 
 import 'dart:io';
-import 'package:woolala_app/screens/login_screen.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:woolala_app/screens/post_screen.dart';
+//import 'package:woolala_app/screens/login_screen.dart';
+//import 'package:image_picker/image_picker.dart';
+//import 'package:woolala_app/screens/post_screen.dart';
 import 'package:woolala_app/screens/profile_screen.dart';
 import 'package:woolala_app/screens/homepage_screen.dart';
-import 'package:woolala_app/screens/search_screen.dart';
-import 'package:woolala_app/widgets/bottom_nav.dart';
+//import 'package:woolala_app/screens/search_screen.dart';
+//import 'package:woolala_app/widgets/bottom_nav.dart';
 import 'package:woolala_app/main.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:social_share/social_share.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:path_provider/path_provider.dart';
-import 'package:image/image.dart' as ui;
-import 'dart:convert';
+//import 'package:image/image.dart' as ui;
+//import 'dart:convert';
+
+import 'package:carousel_slider/carousel_slider.dart';
 
 // This entire class is the widget that will populate the feed on the homepage
 
@@ -52,12 +54,15 @@ class FeedCard extends StatefulWidget {
 
 class _FeedCardState extends State<FeedCard> {
 //(String postID)
-  final _scaffoldGlobalKey = GlobalKey<ScaffoldState>();
+  //final _scaffoldGlobalKey = GlobalKey<ScaffoldState>();
   var startPos;
   var distance = 0.0;
   var stars = 2.5;
   bool rated = false;
   Icon wouldBuy = Icon(Icons.add_shopping_cart);
+  double _currentSliderValue = 20;
+
+  final CarouselController _controller = CarouselController();
 
   void initState() {
     checkWouldBuy(currentUser.userID, widget.postID);
@@ -98,7 +103,7 @@ class _FeedCardState extends State<FeedCard> {
                           color: new Color.fromRGBO(100, 100, 100, 0.90)),
                     ),
                     Text(
-                      postInfo.data[4].toStringAsFixed(2),
+                      postInfo.data[3].toStringAsFixed(2),
                       style: TextStyle(
                         fontSize: 25,
                         color: Colors.white,
@@ -114,7 +119,7 @@ class _FeedCardState extends State<FeedCard> {
         : Container();
   }
 
-  Uint8List _originalImage;
+  //Uint8List _originalImage;
 
   Future<File> convertImageToFile(String imagePath) async {
     final byteData = await rootBundle.load('assets/$imagePath');
@@ -211,7 +216,7 @@ class _FeedCardState extends State<FeedCard> {
       builder: (context, postInfo) {
         if (postInfo.hasData) {
           return FutureBuilder(
-              future: getUserFromDB(postInfo.data[2]),
+              future: getUserFromDB(postInfo.data[1]),
               builder: (context, userInfo) {
                 if (userInfo.hasData) {
                   return Padding(
@@ -257,13 +262,13 @@ class _FeedCardState extends State<FeedCard> {
                                       http.Response res = await reportPost(
                                           widget.postID,
                                           currentUser.userID,
-                                          postInfo.data[3],
-                                          postInfo.data[2]);
+                                          postInfo.data[2],
+                                          postInfo.data[1]);
                                       showReportSuccess(
                                           res.body.isNotEmpty, context);
                                       http.Response reportCheck =
                                           await getReports(
-                                              widget.postID, postInfo.data[2]);
+                                              widget.postID, postInfo.data[1]);
                                       showDeletionSuccess(
                                           (reportCheck.body.isNotEmpty &&
                                               reportCheck.statusCode != 400),
@@ -285,17 +290,29 @@ class _FeedCardState extends State<FeedCard> {
                           ),
                         ),
                         GestureDetector(
-                            child: Screenshot(
-                              controller: sc,
-                              child: Stack(
-                                children: [
-                                  postInfo.data[6],
-                                  Positioned(
-                                      bottom: 10,
-                                      left: 10,
-                                      child: score(widget.postID))
+                            child: Column(
+                            children: <Widget>[
+                              CarouselSlider(
+                                items: postInfo.data[5],
+                                options: CarouselOptions(enlargeCenterPage: true, height: 200),
+                                carouselController: _controller,
+                                ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: <Widget>[
+                                  ...Iterable<int>.generate(postInfo.data[5].length).map(
+                                        (int pageIndex) => Flexible(
+                                      child: ElevatedButton(
+                                          onPressed: () => _controller.animateToPage(pageIndex),
+                                          child: postInfo.data[5][pageIndex],
+                                          style: ElevatedButton.styleFrom(
+                                              fixedSize: const Size(80, 80)),
+                                      ),
+                                    ),
+                                  ),
                                 ],
-                              ),
+                              )]
                             ),
                             onHorizontalDragStart:
                                 (DragStartDetails dragStartDetails) {
@@ -343,6 +360,7 @@ class _FeedCardState extends State<FeedCard> {
                                 setState(() {});
                               }
                             }),
+
                         Container(
                           alignment: Alignment(-1.0, 0.0),
                           child: Column(
@@ -395,26 +413,48 @@ class _FeedCardState extends State<FeedCard> {
                                       // child: Text("Share Options"),
                                     ),
                                     starSlider(widget.postID, stars, rated),
-                                    new IconButton(
-                                      icon: wouldBuy,
-                                      iconSize: 28,
-                                      onPressed: () {
-                                        setState(() {
-                                          if (wouldBuy.icon ==
-                                              Icons.remove_shopping_cart) {
-                                            wouldBuy =
-                                                Icon(Icons.add_shopping_cart);
-                                            removeWouldBuy(currentUser.userID,
-                                                widget.postID);
-                                          } else {
-                                            wouldBuy = Icon(
-                                                Icons.remove_shopping_cart);
-                                            addWouldBuy(currentUser.userID,
-                                                widget.postID);
-                                          }
-                                        });
-                                      },
+                                    // new IconButton(
+                                    //   icon: wouldBuy,
+                                    //   iconSize: 28,
+                                    //   onPressed: () {
+                                    //     setState(() {
+                                    //       if (wouldBuy.icon ==
+                                    //           Icons.remove_shopping_cart) {
+                                    //         wouldBuy =
+                                    //             Icon(Icons.add_shopping_cart);
+                                    //         removeWouldBuy(currentUser.userID,
+                                    //             widget.postID);
+                                    //       } else {
+                                    //         wouldBuy = Icon(
+                                    //             Icons.remove_shopping_cart);
+                                    //         addWouldBuy(currentUser.userID,
+                                    //             widget.postID);
+                                    //       }
+                                    //     });
+                                    //   },
+                                    // ),
+                                    //f:
+                                    SliderTheme(
+                                      data: SliderThemeData(
+                                        thumbColor: Color(0xFF424242),
+                                        thumbShape: RoundSliderThumbShape(enabledThumbRadius: 10)
+                                      ),
+                                      child:
+                                        Slider(
+                                          value: _currentSliderValue,
+                                          max: 100,
+                                          divisions: 5,
+                                          activeColor: Color(0xFF424242),
+                                          inactiveColor: Color(0xFFBDBDBD),
+                                          label: _currentSliderValue.round().toString(),
+                                          onChanged: (double value) {
+                                          setState(() {
+                                          _currentSliderValue = value;
+                                          });
+                                          },
+                                        ),
                                     ),
+                                    //f
                                   ],
                                 ),
                               ),
@@ -439,7 +479,7 @@ class _FeedCardState extends State<FeedCard> {
                                   padding: EdgeInsets.fromLTRB(
                                       10.0, 1.0, 10.0, 15.0),
                                   child: Text(
-                                    postInfo.data[1],
+                                    postInfo.data[0],
                                     textAlign: TextAlign.left,
                                     style: TextStyle(
                                       fontSize: 18,
@@ -456,7 +496,7 @@ class _FeedCardState extends State<FeedCard> {
                           child: Padding(
                             padding: EdgeInsets.fromLTRB(10.0, 1.0, 10.0, 2.0),
                             child: Text(
-                              postInfo.data[3],
+                              postInfo.data[2],
                               textAlign: TextAlign.left,
                               style: TextStyle(
                                   fontSize: 12, fontWeight: FontWeight.w500),

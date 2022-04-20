@@ -62,8 +62,8 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _filter = new TextEditingController();
   String _searchText = "";
-  List results = new List(); // names we get from API
-  List filteredResults = new List(); // names filtered by search text
+  List results = []; // names we get from API
+  List filteredResults = []; // names filtered by search text
   Icon _searchIcon = new Icon(Icons.search);
   Widget _appBarTitle = new Text('Search');
 
@@ -130,7 +130,7 @@ class _SearchPageState extends State<SearchPage> {
   Widget _buildList() {
     //filter the list
     if ((_searchText.length > 0)) {
-      List tempList = new List();
+      List tempList = [];
       for (int i = 0; i < filteredResults.length; i++) {
         if (filteredResults[i]['profileName']
             .toLowerCase()
@@ -183,6 +183,7 @@ class _SearchPageState extends State<SearchPage> {
   Widget build(BuildContext context) {
     BottomNav bottomBar = BottomNav(context);
     bottomBar.currentIndex = 10;
+    bottomBar.brand = false; //hardcoded since user info not present
 
     return Scaffold(
       appBar: AppBar(
@@ -210,7 +211,7 @@ class _SearchPageState extends State<SearchPage> {
         onTap: (int index) {
           bottomBar.switchPage(index, context);
         },
-        items: bottomBar.bottom_items,
+        items: bottomBar.getItems(),
         backgroundColor: Colors.white,
       ),
     );

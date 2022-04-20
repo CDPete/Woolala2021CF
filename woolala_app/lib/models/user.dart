@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:io';
+//import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'dart:math';
+//import 'dart:math';
 import 'package:woolala_app/main.dart';
-import 'package:woolala_app/screens/login_screen.dart';
+//import 'package:woolala_app/screens/login_screen.dart';
 
 class User {
   final String userID;
   final picker = ImagePicker();
-  File _image;
+  //File _image;
   String profileName;
   String url;
   final String googleID;
@@ -26,6 +26,7 @@ class User {
   bool private;
   List ratedPosts;
   List blockedUsers;
+  bool brand;
 
   User({
     this.userID,
@@ -44,6 +45,7 @@ class User {
     this.followers,
     this.ratedPosts,
     this.blockedUsers,
+    this.brand,
   });
 
   User.fromJSON(Map<String, dynamic> json)
@@ -62,7 +64,8 @@ class User {
         postIDs = json['postIDs'],
         private = json['private'],
         ratedPosts = json['ratedPosts'],
-        blockedUsers = json['blockedUsers'];
+        blockedUsers = json['blockedUsers'],
+        brand = json['brand'];
 
   Map<String, dynamic> toJSON() => {
         'userID': userID,
@@ -81,6 +84,7 @@ class User {
         'private': private,
         'ratedPosts': ratedPosts,
         'blockedUsers': blockedUsers,
+        'brand': brand,
       };
 
   Future<double> getAvgScore() async {
@@ -151,7 +155,7 @@ class User {
     });
   }
 
-  Future<http.Response> isUserNameTaken(String n) {
+  static Future<http.Response> isUserNameTaken(String n) {
     String uName = n;
     if (uName.isNotEmpty && uName[0] != '@') {
       uName = '@' + n;
@@ -201,5 +205,14 @@ class User {
         backgroundImage: MemoryImage(base64Decode(profilePic)),
       );
     }
+  }
+
+  Future<http.Response> setBrand(bool ut) {
+    private = ut;
+    String request =
+        domain + '/updateUserType/' + userID + '/' + private.toString();
+    return http.post(Uri.parse(request), headers: <String, String>{
+      'Content-Type': 'application/json',
+    });
   }
 }

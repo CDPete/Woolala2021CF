@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:mailto/mailto.dart';
-import 'package:woolala_app/screens/login_screen.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+//import 'package:woolala_app/screens/login_screen.dart';
+//import 'package:http/http.dart' as http;
+//import 'dart:convert';
 import 'package:woolala_app/models/user.dart';
-import 'package:woolala_app/screens/profile_screen.dart';
+//import 'package:woolala_app/screens/profile_screen.dart';
 import 'package:woolala_app/widgets/bottom_nav.dart';
-import 'package:woolala_app/main.dart';
-import 'package:woolala_app/screens/following_list_screen.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+//import 'package:woolala_app/main.dart';
+//import 'package:woolala_app/screens/following_list_screen.dart';
+//import 'package:fluttertoast/fluttertoast.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 //Create Stateful Widget
@@ -24,11 +24,11 @@ class WouldBuyListScreen extends StatefulWidget {
 
 class _WouldBuyListScreen extends State<WouldBuyListScreen> {
   //Lists to build the ListView
-  List followerNameList = new List();
+  List followerNameList = [];
   User currentProfile;
-  List followerList = new List();
-  List followerEmailList = new List();
-  List followerUserNameList = new List();
+  List followerList = [];
+  List followerEmailList = [];
+  List followerUserNameList = [];
 
   //Build the list using a Futurebuilder for Async
   // Widget _buildList() {
@@ -72,6 +72,7 @@ class _WouldBuyListScreen extends State<WouldBuyListScreen> {
   @override
   Widget build(BuildContext context) {
     BottomNav bottomBar = BottomNav(context);
+    bottomBar.brand = currentProfile.brand;
     return Scaffold(
       appBar: AppBar(
           leading: BackButton(
@@ -127,7 +128,7 @@ class _WouldBuyListScreen extends State<WouldBuyListScreen> {
         onTap: (int index) {
           bottomBar.switchPage(index, context);
         },
-        items: bottomBar.bottom_items,
+        items: bottomBar.getItems(),
       ),
     );
   }
@@ -151,8 +152,8 @@ class _WouldBuyListScreen extends State<WouldBuyListScreen> {
 
   //prompts to the default mailing app to email all
   launchMailtoAll() async {
-    List<String> allMails = new List();
-    List<String> allNames = new List();
+    List<String> allMails = [];
+    List<String> allNames = [];
 
     for (int i = 0; i < widget.wouldBuyEmailList.length; i++) {
       allMails.add('${widget.wouldBuyEmailList[i]}');

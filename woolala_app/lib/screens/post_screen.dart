@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import 'package:flutter_facebook_login/flutter_facebook_login.dart';
+//import 'package:flutter/services.dart';
+//import 'package:google_sign_in/google_sign_in.dart';
+//import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+//import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:woolala_app/screens/login_screen.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+//import 'package:http/http.dart' as http;
+//import 'dart:convert';
 import 'dart:io';
-import 'package:woolala_app/screens/login_screen.dart';
-import 'package:image_picker/image_picker.dart';
+//import 'package:woolala_app/screens/login_screen.dart';
+//import 'package:image_picker/image_picker.dart';
 import 'package:woolala_app/screens/homepage_screen.dart';
 import 'package:intl/intl.dart';
 
@@ -26,12 +26,27 @@ class PostScreen extends StatefulWidget {
 
 class _PostScreenState extends State<PostScreen> {
   File _image;
-  List<Object> test;
+  List<Object> arguments;
   String _text = "";
   String _price = "";
+  String _cat = "";
   TextEditingController _c;
   TextEditingController _d;
-  String img64;
+  String _a = "";
+  //String img64;
+  List<File> images;
+  List<String> encodes;
+
+  String dropdownvalue = 'Apparel';
+  var items = [
+    "Apparel",
+    "Shoes",
+    "Accessories",
+    "Crafts",
+    "Designs",
+    "Home",
+    "Others"
+  ];
 
   static final DateTime now = DateTime.now().toLocal();
   static final DateFormat formatter = DateFormat('yyyy-MM-dd');
@@ -41,14 +56,19 @@ class _PostScreenState extends State<PostScreen> {
   initState() {
     _c = new TextEditingController();
     _d = new TextEditingController();
+    _a = "Apparel";
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    test = ModalRoute.of(context).settings.arguments;
-    _image = test[0];
-    img64 = test[1];
+    arguments = ModalRoute.of(context).settings.arguments;
+
+    images = arguments[0];
+    encodes = arguments[1];
+
+    _image = images[0];
+    //img64 = arguments[1];
     return Scaffold(
       resizeToAvoidBottomInset: true,
       // backgroundColor: Colors.grey[800],
@@ -77,6 +97,7 @@ class _PostScreenState extends State<PostScreen> {
             TextField(
               maxLength: 280,
               maxLengthEnforced: true,
+              //maxLengthEnforcement: MaxLengthEnforcement.enforced,
               textInputAction: TextInputAction.go,
               keyboardType: TextInputType.multiline,
               maxLines: null,
@@ -89,6 +110,7 @@ class _PostScreenState extends State<PostScreen> {
             TextField(
               maxLength: 280,
               maxLengthEnforced: true,
+              //maxLengthEnforcement: MaxLengthEnforcement.enforced,
               textInputAction: TextInputAction.go,
               keyboardType: TextInputType.multiline,
               maxLines: null,
@@ -96,6 +118,33 @@ class _PostScreenState extends State<PostScreen> {
                   hintText: "Enter a target price!",
                   contentPadding: const EdgeInsets.all(20.0)),
               controller: _d,
+            ),
+            SizedBox(height: 20.0),
+            Text("Enter Category of Post:"),
+
+            DropdownButton(
+
+              // Initial Value
+              value: dropdownvalue,
+
+              // Down Arrow Icon
+              icon: const Icon(Icons.keyboard_arrow_down),
+
+              // Array list of items
+              items: items.map((String items) {
+                return DropdownMenuItem(
+                  value: items,
+                  child: Text(items),
+                );
+              }).toList(),
+              // After selecting the desired option,it will
+              // change button value to selected value
+              onChanged: (String newValue) {
+                setState(() {
+                  dropdownvalue = newValue;
+                  _a = newValue;
+                });
+              },
             ),
           ],
         ),
@@ -111,10 +160,12 @@ class _PostScreenState extends State<PostScreen> {
                 setState(() {
                   this._text = _c.text;
                   this._price = _d.text;
+                  this._cat = _a;
                 }),
                 print(_text),
-                createPost(currentUser.userID + ":::" + getNewID(), img64, date,
-                    _text, currentUser.userID, currentUser.profileName, _price),
+                createPost(currentUser.userID + ":::" + getNewID(), encodes[0],
+                    encodes[1], encodes[2], encodes[3], encodes[4], date,
+                    _text, currentUser.userID, currentUser.profileName, _price, _cat),
                 Navigator.pop(context),
                 Navigator.pushReplacementNamed(context, '/home'),
               },

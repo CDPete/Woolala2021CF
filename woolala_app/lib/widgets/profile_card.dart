@@ -1,35 +1,37 @@
-import 'dart:ui';
+//import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import 'package:flutter_facebook_login/flutter_facebook_login.dart';
+//import 'package:flutter/services.dart';
+//import 'package:google_sign_in/google_sign_in.dart';
+//import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+//import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:woolala_app/screens/login_screen.dart';
-import 'package:woolala_app/models/user.dart';
+//import 'package:woolala_app/models/user.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:mongo_dart/mongo_dart.dart' as mongo;
-import 'dart:io' as Io;
+//import 'package:mongo_dart/mongo_dart.dart' as mongo;
+//import 'dart:io' as Io;
 //import 'package:audioplayers/src/audio_cache.dart';
-import 'package:audioplayers/audioplayers.dart';
-import 'dart:collection';
-import 'package:pull_to_refresh/pull_to_refresh.dart';
+//import 'package:audioplayers/audioplayers.dart';
+//import 'dart:collection';
+//import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 import 'dart:io';
-import 'dart:typed_data';
-import 'package:woolala_app/screens/login_screen.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:woolala_app/screens/post_screen.dart';
+//import 'dart:typed_data';
+//import 'package:woolala_app/screens/login_screen.dart';
+//import 'package:image_picker/image_picker.dart';
+//import 'package:woolala_app/screens/post_screen.dart';
 import 'package:woolala_app/screens/profile_screen.dart';
 import 'package:woolala_app/screens/homepage_screen.dart';
-import 'package:woolala_app/screens/search_screen.dart';
+//import 'package:woolala_app/screens/search_screen.dart';
 import 'package:woolala_app/screens/wouldbuy_list_screen.dart';
-import 'package:woolala_app/widgets/bottom_nav.dart';
+//import 'package:woolala_app/widgets/bottom_nav.dart';
 import 'package:woolala_app/main.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:social_share/social_share.dart';
+
+import 'package:carousel_slider/carousel_slider.dart';
 
 Future<http.Response> deletePost(String postID, String userID) {
   return http.post(
@@ -56,6 +58,8 @@ class OwnFeedCard extends StatefulWidget {
 
 class _OwnFeedCardState extends State<OwnFeedCard> {
 //(String postID)
+
+  final CarouselController _controller = CarouselController();
 
   void initState() {
     super.initState();
@@ -114,7 +118,7 @@ class _OwnFeedCardState extends State<OwnFeedCard> {
                           color: new Color.fromRGBO(100, 100, 100, 0.90)),
                     ),
                     Text(
-                      postInfo.data[4].toStringAsFixed(2),
+                      postInfo.data[3].toStringAsFixed(2),
                       style: TextStyle(
                         fontSize: 25,
                         color: Colors.white,
@@ -136,7 +140,7 @@ class _OwnFeedCardState extends State<OwnFeedCard> {
   var tempWouldBuyList = [];
   var wouldBuyNameList = [];
   var wouldBuyEmailList = [];
-  Uint8List _originalImage;
+  //Uint8List _originalImage;
 
   void checkWouldBuy(String userID, String postID) async {
     print("Post ID:" + postID);
@@ -164,7 +168,7 @@ class _OwnFeedCardState extends State<OwnFeedCard> {
       builder: (context, postInfo) {
         if (postInfo.hasData) {
           return FutureBuilder(
-              future: getUserFromDB(postInfo.data[2]),
+              future: getUserFromDB(postInfo.data[1]),
               builder: (context, userInfo) {
                 if (userInfo.hasData) {
                   return Padding(
@@ -228,17 +232,29 @@ class _OwnFeedCardState extends State<OwnFeedCard> {
                           ),
                         ),
                         GestureDetector(
-                            child: Screenshot(
-                              controller: sc,
-                              child: Stack(
-                                children: [
-                                  postInfo.data[0],
-                                  Positioned(
-                                      bottom: 10,
-                                      left: 10,
-                                      child: score(widget.postID))
-                                ],
-                              ),
+                            child: Column(
+                                children: <Widget>[
+                                  CarouselSlider(
+                                    items: postInfo.data[5],
+                                    options: CarouselOptions(enlargeCenterPage: true, height: 200),
+                                    carouselController: _controller,
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: <Widget>[
+                                      ...Iterable<int>.generate(postInfo.data[5].length).map(
+                                            (int pageIndex) => Flexible(
+                                          child: ElevatedButton(
+                                            onPressed: () => _controller.animateToPage(pageIndex),
+                                            child: postInfo.data[5][pageIndex],
+                                            style: ElevatedButton.styleFrom(
+                                                fixedSize: const Size(80, 80)),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )]
                             ),
                             onHorizontalDragStart:
                                 (DragStartDetails dragStartDetails) {
@@ -306,7 +322,7 @@ class _OwnFeedCardState extends State<OwnFeedCard> {
                                       },
                                     ),
                                     Text(
-                                      "Scores: " + postInfo.data[5].toString(),
+                                      "Scores: " + postInfo.data[4].toString(),
                                       style: TextStyle(
                                         fontSize: 20.0,
                                         fontWeight: FontWeight.w500,
@@ -314,7 +330,7 @@ class _OwnFeedCardState extends State<OwnFeedCard> {
                                     ),
                                     Text(
                                       "Avg: " +
-                                          postInfo.data[4].toStringAsFixed(2),
+                                          postInfo.data[3].toStringAsFixed(2),
                                       style: TextStyle(
                                         fontSize: 20.0,
                                         fontWeight: FontWeight.w500,
@@ -356,7 +372,7 @@ class _OwnFeedCardState extends State<OwnFeedCard> {
                                   padding: EdgeInsets.fromLTRB(
                                       10.0, 1.0, 10.0, 15.0),
                                   child: Text(
-                                    postInfo.data[1],
+                                    postInfo.data[0], //was 1
                                     textAlign: TextAlign.left,
                                     style: TextStyle(
                                       fontSize: 18,
@@ -372,7 +388,7 @@ class _OwnFeedCardState extends State<OwnFeedCard> {
                           child: Padding(
                             padding: EdgeInsets.fromLTRB(10.0, 1.0, 10.0, 2.0),
                             child: Text(
-                              postInfo.data[3],
+                              postInfo.data[2],
                               textAlign: TextAlign.left,
                               style: TextStyle(
                                   fontSize: 12, fontWeight: FontWeight.w500),
